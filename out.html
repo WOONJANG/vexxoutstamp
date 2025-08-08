@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>퇴근 기록 이동중...</title>
+  <script>
+    // 👇 네 Apps Script 웹앱 /exec 주소로 바꾸기
+    const GAS_BASE = "https://script.google.com/macros/s/AKfycbwgDkImxvHoXI8WI0qDQ7cm1g2mqf-valwdL4f_rHhPcQf4aW7SwJ8USfe7kqTXVh_dTQ/exec";
+
+    function getParam(k){
+      const m = new RegExp("[?&]"+k+"=([^&]+)").exec(location.search);
+      return m ? decodeURIComponent(m[1].replace(/\+/g, "%20")) : "";
+    }
+
+    (function () {
+      const u   = getParam("u");              // 사용자명 (예: 장운)
+      const act = getParam("act") || "out";   // 기본 out
+
+      if (!u) {
+        document.write("<meta http-equiv='refresh' content='0;url=?u=%EC%9E%A5%EC%9A%B4&act=out'>");
+        return;
+      }
+
+      const target = GAS_BASE
+        + "?u=" + encodeURIComponent(u)
+        + "&act=" + encodeURIComponent(act);
+
+      // 가장 확실한 리다이렉트 (브라우저 강제)
+      try { window.top.location.replace(target); }
+      catch(e) { location.replace(target); }
+
+      // JS 끊긴 환경용 안전망
+      document.write("<noscript><meta http-equiv='refresh' content='0;url="+target+"'></noscript>");
+    })();
+  </script>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,'Noto Sans KR',sans-serif;
+         display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+    .card{padding:24px;border:1px solid #eee;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,.06);text-align:center}
+    .small{color:#666;font-size:12px;margin-top:12px}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h3>퇴근 기록 페이지로 이동 중…</h3>
+    <div class="small">자동 이동이 안 되면 <a id="go" href="#">여기</a>를 누르세요.</div>
+  </div>
+  <script>
+    // 수동 클릭용 링크도 동일 타겟으로 연결
+    (function(){
+      const p = new URLSearchParams(location.search);
+      const u = p.get("u")||"";
+      const act = p.get("act")||"out";
+      const a = document.getElementById("go");
+      if (a) a.href = GAS_BASE + "?u=" + encodeURIComponent(u) + "&act=" + encodeURIComponent(act);
+    })();
+  </script>
+</body>
+</html>
