@@ -1,60 +1,52 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>퇴근 기록 이동중...</title>
-  <script>
-    // ✔ 당신의 Apps Script /exec 주소 (이미 넣어둠)
-    const GAS_BASE = "https://script.google.com/macros/s/AKfycbxzpcll5wE5iX4MF_1wJ0Ygx1OYxu2eIn_RzxxWhr2ff9Z4IsQfqN0nHsU18L4QljgOiQ/exec";
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>이동 중…</title>
+<script>
+  // 당신의 Apps Script /exec 주소
+  const GAS_BASE = "https://script.google.com/macros/s/AKfycbwgDkImxvHoXI8WI0qDQ7cm1g2mqf-valwdL4f_rHhPcQf4aW7SwJ8USfe7kqTXVh_dTQ/exec";
 
-    function getParam(k) {
-      const m = new RegExp("[?&]"+k+"=([^&]+)").exec(location.search);
-      return m ? decodeURIComponent(m[1].replace(/\+/g, "%20")) : "";
+  const qp  = new URLSearchParams(location.search);
+  const u   = qp.get('u')   || '';
+  const act = qp.get('act') || 'out';
+  const ua  = navigator.userAgent || '';
+
+  function go(target) {
+    try { window.top.location.replace(target); } catch(e) { location.replace(target); }
+    document.write('<noscript><meta http-equiv="refresh" content="0;url='+target+'"></noscript>');
+  }
+
+  (async function () {
+    if (!u) {
+      document.write("<div style='font:14px system-ui;padding:24px'>이름 파라미터(u)가 필요합니다.</div>");
+      return;
     }
 
-    (function () {
-      const u   = getParam("u");              // 예: 장운
-      const act = getParam("act") || "out";   // 기본 out
+    // (선택) 공인 IP 조회 — 실패해도 UA만으로 진행
+    let ip = '';
+    try {
+      const ctl = new AbortController();
+      const t = setTimeout(() => ctl.abort(), 1200); // 1.2초 타임아웃
+      const res = await fetch('https://api.ipify.org?format=json', {signal: ctl.signal});
+      clearTimeout(t);
+      if (res.ok) ip = (await res.json()).ip || '';
+    } catch (_) {}
 
-      if (!u) {
-        document.write("<div style='font:14px system-ui;padding:24px'>이름 파라미터(u)가 필요합니다.<br>예: <code>?u=%EC%9E%A5%EC%9A%B4&act=out</code></div>");
-        return;
-      }
+    const qs = new URLSearchParams({
+      u, act,
+      ua,           // UA를 쿼리로 전달
+      ...(ip ? {ip} : {}) // IP가 있으면 전달
+    });
 
-      const target = GAS_BASE + "?u=" + encodeURIComponent(u) + "&act=" + encodeURIComponent(act);
-
-      // 브라우저 강제 이동(웹뷰/드라이브 뷰어 우회)
-      try { window.top.location.replace(target); }
-      catch (e) { location.replace(target); }
-
-      // JS 차단 환경용 안전망
-      document.write('<noscript><meta http-equiv="refresh" content="0;url='+target+'"></noscript>');
-    })();
-  </script>
-  <style>
-    html,body { height:100%; margin:0 }
-    body { display:flex; align-items:center; justify-content:center; font:14px system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", sans-serif; }
-    .card { padding:20px 24px; border:1px solid #eee; border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,.06); text-align:center; }
-    a { color:#0b57d0; text-decoration:none }
-  </style>
-</head>
+    go(GAS_BASE + '?' + qs.toString());
+  })();
+</script>
+<style>
+  html,body { height:100%; margin:0 }
+  body { display:grid; place-items:center; font:14px system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans KR",sans-serif }
+</style>
 <body>
-  <div class="card">
-    <div>퇴근 기록 페이지로 이동 중…</div>
-    <div style="margin-top:8px;font-size:12px;color:#666">
-      자동 이동이 안 되면 <a id="go" href="#">여기</a>를 눌러 주세요.
-    </div>
-  </div>
-  <script>
-    // 수동 클릭용 링크도 같은 타겟으로 연결
-    (function(){
-      const p = new URLSearchParams(location.search);
-      const u = p.get("u") || "";
-      const act = p.get("act") || "out";
-      const a = document.getElementById("go");
-      if (a) a.href = GAS_BASE + "?u=" + encodeURIComponent(u) + "&act=" + encodeURIComponent(act);
-    })();
-  </script>
+  <div>퇴근 기록 페이지로 이동 중…</div>
 </body>
 </html>
