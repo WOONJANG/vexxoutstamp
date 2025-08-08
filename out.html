@@ -1,52 +1,84 @@
 <!DOCTYPE html>
 <html lang="ko">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>이동 중…</title>
-<script>
-  // 당신의 Apps Script /exec 주소
-  const GAS_BASE = "https://script.google.com/macros/s/AKfycbzL6c9zFEvFdD1KYz9F0Z9N20ndVRQqO0-j-MgSbnH19bROhKB8OPek_YuiNZdx8OEvRw/exec";
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>퇴근 기록 이동중...</title>
+  <style>
+    html,body { height:100%; margin:0 }
+    body { display:grid; place-items:center; font:14px system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans KR",sans-serif }
+    .card { padding:20px 24px; border:1px solid #eee; border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,.06); text-align:center }
+    a { color:#0b57d0; text-decoration:none }
+  </style>
+  <script>
+    // ✔ 너의 Apps Script 웹앱 /exec 주소
+    const GAS_BASE = "https://script.google.com/macros/s/AKfycbzL6c9zFEvFdD1KYz9F0Z9N20ndVRQqO0-j-MgSbnH19bROhKB8OPek_YuiNZdx8OEvRw/exec";
 
-  const qp  = new URLSearchParams(location.search);
-  const u   = qp.get('u')   || '';
-  const act = qp.get('act') || 'out';
-  const ua  = navigator.userAgent || '';
+    // 쿼리 파라미터 읽기 (u=이름, act=out/in)
+    const qp  = new URLSearchParams(location.search);
+    const u   = qp.get('u')   || '';
+    const act = qp.get('act') || 'out';
 
-  function go(target) {
-    try { window.top.location.replace(target); } catch(e) { location.replace(target); }
-    document.write('<noscript><meta http-equiv="refresh" content="0;url='+target+'"></noscript>');
-  }
+    // 브라우저 정보
+    const ua  = navigator.userAgent || '';
 
-  (async function () {
-    if (!u) {
-      document.write("<div style='font:14px system-ui;padding:24px'>이름 파라미터(u)가 필요합니다.</div>");
-      return;
+    // 캐시 버스터(항상 다른 URL로 만들어서 중복 기록 보장)
+    const cacheBust = () => Date.now().toString();
+
+    // 최종 이동
+    function go(target) {
+      try { window.top.location.replace(target); }
+      catch (e) { location.replace(target); }
+      // JS가 막힌 환경용 안전망
+      document.write('<noscript><meta http-equiv="refresh" content="0;url='+target+'"></noscript>');
     }
 
-    // (선택) 공인 IP 조회 — 실패해도 UA만으로 진행
-    let ip = '';
-    try {
-      const ctl = new AbortController();
-      const t = setTimeout(() => ctl.abort(), 1200); // 1.2초 타임아웃
-      const res = await fetch('https://api.ipify.org?format=json', {signal: ctl.signal});
-      clearTimeout(t);
-      if (res.ok) ip = (await res.json()).ip || '';
-    } catch (_) {}
+    (async function main () {
+      if (!u) {
+        document.write("<div class='card'>이름 파라미터(u)가 필요합니다.<br><small>예: <code>?u=%EC%9E%A5%EC%9A%B4&act=out</code></small></div>");
+        return;
+      }
 
-    const qs = new URLSearchParams({
-      u, act,
-      ua,           // UA를 쿼리로 전달
-      ...(ip ? {ip} : {}) // IP가 있으면 전달
-    });
+      // (선택) 공인 IP 조회 — 실패해도 UA만으로 진행
+      let ip = '';
+      try {
+        const ctl = new AbortController();
+        const t = setTimeout(() => ctl.abort(), 1200); // 1.2초 타임아웃
+        const res = await fetch('https://api.ipify.org?format=json', { signal: ctl.signal });
+        clearTimeout(t);
+        if (res.ok) ip = (await res.json()).ip || '';
+      } catch (_) { /* ignore */ }
 
-    go(GAS_BASE + '?' + qs.toString());
-  })();
-</script>
-<style>
-  html,body { height:100%; margin:0 }
-  body { display:grid; place-items:center; font:14px system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans KR",sans-serif }
-</style>
+      const qs = new URLSearchParams({
+        u, act,
+        ua,                 // UA 전달
+        _r: cacheBust()     // 캐시 방지
+      });
+      if (ip) qs.set('ip', ip); // IP가 있을 때만 전달
+
+      const target = GAS_BASE + '?' + qs.toString();
+      go(target);
+    })();
+  </script>
+</head>
 <body>
-  <div>퇴근 기록 페이지로 이동 중…</div>
+  <div class="card">
+    퇴근 기록 페이지로 이동 중…
+    <div style="margin-top:8px;color:#666;font-size:12px">
+      자동 이동이 안 되면 <a id="go" href="#">여기</a>를 누르세요.
+    </div>
+  </div>
+  <script>
+    // 수동 이동 링크도 동일 타겟으로 설정
+    (function(){
+      const p  = new URLSearchParams(location.search);
+      const u  = p.get('u') || '';
+      const act= p.get('act') || 'out';
+      const ua = navigator.userAgent || '';
+      const qs = new URLSearchParams({ u, act, ua, _r: Date.now().toString() });
+      const a  = document.getElementById('go');
+      if (a) a.href = GAS_BASE + '?' + qs.toString();
+    })();
+  </script>
 </body>
 </html>
