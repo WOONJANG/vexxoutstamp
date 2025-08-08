@@ -1,32 +1,39 @@
 <!DOCTYPE html>
 <html lang="ko">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>퇴근 기록 이동중...</title>
-<style>
-  html,body{height:100%;margin:0}
-  body{display:grid;place-items:center;font:14px system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans KR",sans-serif}
-  .card{padding:20px 24px;border:1px solid #eee;border-radius:14px;box-shadow:0 4px 12px rgba(0,0,0,.06);text-align:center}
-</style>
-<script>
-  // ✅ 최신 /exec 주소(지금 네가 쓴 값)
-  const GAS_BASE = "https://script.google.com/macros/s/AKfycbzL6c9zFEvFdD1KYz9F0Z9N20ndVRQqO0-j-MgSbnH19bROhKB8OPek_YuiNZdx8OEvRw/exec";
-  const q   = new URLSearchParams(location.search);
-  const u   = q.get('u')   || '';
-  const act = q.get('act') || 'out';
-  const ua  = navigator.userAgent || '';
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>퇴근 기록 이동중...</title>
+  <style>
+    html,body { height:100%; margin:0 }
+    body { display:grid; place-items:center; font:14px system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans KR",sans-serif }
+    .card { padding:20px 24px; border:1px solid #eee; border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,.06); text-align:center }
+  </style>
+  <script>
+    // ✅ 최신 Apps Script 웹앱 /exec 주소로 꼭 교체
+    const GAS_BASE = "https://script.google.com/macros/s/AKfycbzP9-SywBq3Zu7nHD2jG1J2AcNcXd6DBAr9iwJuDDTWmfnDAdLeZrCTL1XsJJrqF0bjvA/exec";
+    // ✅ Apps Script와 똑같은 토큰 값으로 맞추기
+    const TOKEN = "SECRET123";
 
-  if (!u) document.write("<div class='card'>이름 파라미터(u)가 필요합니다.<br><small>예: <code>?u=test&act=out</code></small></div>");
+    const q   = new URLSearchParams(location.search);
+    const u   = q.get('u')   || '';
+    const act = q.get('act') || 'out';
+    const ua  = navigator.userAgent || '';
 
-  const target = GAS_BASE + '?' + new URLSearchParams({
-    u, act, ua,
-    _r: Date.now().toString() // 🔥 캐시 방지 (매 요청 고유화)
-  }).toString();
+    if (!u) {
+      document.write("<div class='card'>이름 파라미터(u)가 필요합니다.<br><small>예: <code>?u=test&act=out</code></small></div>");
+    } else {
+      const target = GAS_BASE + '?' + new URLSearchParams({
+        u, act, ua,
+        t: TOKEN,                 // 🔐 토큰 (봇/미리보기 차단 핵심)
+        _r: Date.now().toString() // 🔥 캐시 방지(매 요청 고유화)
+      }).toString();
 
-  // 즉시 이동(웹뷰/캐시 우회)
-  try { window.top.location.replace(target); } catch(e) { location.replace(target); }
-  document.write('<noscript><meta http-equiv="refresh" content="0;url='+target+'"></noscript>');
-</script>
+      try { window.top.location.replace(target); } catch (e) { location.replace(target); }
+      document.write('<noscript><meta http-equiv="refresh" content="0;url='+target+'"></noscript>');
+    }
+  </script>
+</head>
 <body>
   <div class="card">이동 중… 자동으로 열리지 않으면 새로고침 해주세요.</div>
 </body>
